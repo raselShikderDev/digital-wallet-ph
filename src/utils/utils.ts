@@ -1,5 +1,0 @@
-
-
-const generatePassword = (password:string)=>{
-    
-}
