@@ -1,6 +1,8 @@
+/* eslint-disable no-console */
 import mongoose from "mongoose";
 import app from "./app";
 import { envVars } from "./config/env";
+import createSuperAdmin from "./utils/seedSuperAdmin";
 
 const startServer = async () => {
    try {
@@ -15,6 +17,7 @@ const startServer = async () => {
         console.log(`Server is running at http://localhost:${envVars.PORT}`);
       }
     });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (envVars.NODE_ENV === "Development") {
       console.log(`Somthing wrong: ${error}`);
@@ -25,4 +28,5 @@ const startServer = async () => {
 
 (async () => {
   await startServer();
+  await createSuperAdmin()
 })();

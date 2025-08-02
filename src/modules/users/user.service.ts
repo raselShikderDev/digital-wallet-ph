@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { StatusCodes } from "http-status-codes";
 import { envVars } from "../../config/env";
 import myAppError from "../../errorHelper/myAppError";
@@ -47,8 +48,8 @@ const alluser = async () => {
   }
   const userCount = await userModel.countDocuments();
   return {
-    data: users,
     meta: userCount,
+    data: users,
   };
 };
 
@@ -67,7 +68,6 @@ const getUser = async (id: string) => {
 // update user by id
 const updateUser = async (id: string, payload:Partial<IUser>) => {
   const existingUser = await getUser(id)
-
   if(payload.isDeleted || payload.isVerified || payload.role || payload.status){
     if (existingUser.role === ROLE.USER || existingUser.role === ROLE.AGENT) {
       throw new myAppError(StatusCodes.UNAUTHORIZED, "You are not authorized");

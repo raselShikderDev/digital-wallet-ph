@@ -21,7 +21,7 @@ const createuser = asyncHandle(async(req:Request, res:Response, next:NextFunctio
 })
 
 // Retriving all user
-const allUser = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{
+const allUser = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{    
     const data = await userServices.alluser()
     sendResponse(res, {
     statusCode:StatusCodes.OK,
@@ -37,7 +37,7 @@ const allUser = asyncHandle(async(req:Request, res:Response, next:NextFunction)=
 // Retriving user by id
 const getUser = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{
     const id = req.params.id
-    if (mongoose.isValidObjectId(id)) {
+    if (!mongoose.isValidObjectId(id)) {
         throw new myAppError(StatusCodes.BAD_REQUEST, "User id is not valid")
     }
      const data = await userServices.getUser(id)
@@ -51,8 +51,9 @@ const getUser = asyncHandle(async(req:Request, res:Response, next:NextFunction)=
 
 // Updating user by id
 const updateUser = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{
+    console.log("Got request for update user");
     const id = req.params.id
-    if (mongoose.isValidObjectId(id)) {
+    if (!mongoose.isValidObjectId(id)) {
         throw new myAppError(StatusCodes.BAD_REQUEST, "User id is not valid")
     }
     const payload = req.body
@@ -68,7 +69,7 @@ const updateUser = asyncHandle(async(req:Request, res:Response, next:NextFunctio
 // Deleteing user by id
 const deleteUser = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{
     const id = req.params.id
-    if (mongoose.isValidObjectId(id)) {
+    if (!mongoose.isValidObjectId(id)) {
         throw new myAppError(StatusCodes.BAD_REQUEST, "User id is not valid")
     }
     await userServices.deleteUser(id)

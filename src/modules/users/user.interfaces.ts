@@ -1,7 +1,6 @@
 import { Types } from "mongoose";
 
 export enum USER_STATUS{
-    PENDING = "PENDING",
     ACTIVE = "ACTIVE",
     DEACTIVE = "DEACTIVE",
     SUSPENDED = "SUSPENDED",

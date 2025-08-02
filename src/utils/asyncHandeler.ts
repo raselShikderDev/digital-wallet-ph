@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { NextFunction, Request, Response } from "express";
 import { envVars } from "../config/env";
 
@@ -13,6 +14,6 @@ export const asyncHandle =
       if (envVars.NODE_ENV === "Development") {
         console.log(err);
       }
-      next()
+      next(err)
     });
   };

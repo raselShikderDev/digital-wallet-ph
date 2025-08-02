@@ -26,7 +26,6 @@ const authProviderSchema = new mongoose.Schema<IAuthProvider>(
 
 const userSchema = new mongoose.Schema<IUser>(
   {
-    _id: Schema.ObjectId,
     name: {
       type: String,
       required: true,
