@@ -5,6 +5,7 @@ import myAppError from "../../errorHelper/myAppError";
 import { IAuthProvider, IUser, ROLE } from "./user.interfaces";
 import { userModel } from "./user.model";
 import bcrypt from "bcrypt";
+import { JwtPayload } from "jsonwebtoken";
 
 // Create user
 const createUser = async (payload: IUser) => {
@@ -66,11 +67,22 @@ const getUser = async (id: string) => {
 };
 
 // update user by id
-const updateUser = async (id: string, payload:Partial<IUser>) => {
-  const existingUser = await getUser(id)
-  if(payload.isDeleted || payload.isVerified || payload.role || payload.status){
-    if (existingUser.role === ROLE.USER || existingUser.role === ROLE.AGENT) {
-      throw new myAppError(StatusCodes.UNAUTHORIZED, "You are not authorized");
+const updateUser = async (id: string, payload:Partial<IUser>, decodedToken:JwtPayload) => {
+
+  if (payload.role) {
+    if (decodedToken.role === ROLE.USER || decodedToken.role === ROLE.AGENT) {
+      throw new myAppError(StatusCodes.FORBIDDEN, "You are not authorized");
+    }
+    
+    if (payload.role === ROLE.SUPER_ADMIN || decodedToken.role === ROLE.ADMIN) {
+      throw new myAppError(StatusCodes.FORBIDDEN, "You are not authorized");
+    }
+  }
+
+
+  if(payload.isDeleted || payload.isVerified || payload.role || payload.status || payload.isAgentApproved){
+    if (decodedToken.role === ROLE.USER || decodedToken.role === ROLE.AGENT) {
+      throw new myAppError(StatusCodes.FORBIDDEN, "You are not authorized");
     }
   }
 

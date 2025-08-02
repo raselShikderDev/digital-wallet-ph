@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
 import { asyncHandle } from "../../utils/asyncHandeler";
 import { userServices } from "./user.service";
@@ -51,13 +52,14 @@ const getUser = asyncHandle(async(req:Request, res:Response, next:NextFunction)=
 
 // Updating user by id
 const updateUser = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{
-    console.log("Got request for update user");
+    
     const id = req.params.id
+    const decodedToken = req.user
     if (!mongoose.isValidObjectId(id)) {
         throw new myAppError(StatusCodes.BAD_REQUEST, "User id is not valid")
     }
     const payload = req.body
-    const data = await userServices.updateUser(id, payload)
+    const data = await userServices.updateUser(id, payload, decodedToken)
     sendResponse(res, {
     statusCode:StatusCodes.OK,
     success:true,

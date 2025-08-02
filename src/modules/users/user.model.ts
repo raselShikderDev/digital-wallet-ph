@@ -1,11 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import {
-  CURRENCY,
-  IUser,
-  ROLE,
-  USER_STATUS,
-  IAuthProvider,
-} from "./user.interfaces";
+import { IUser, ROLE, USER_STATUS, IAuthProvider } from "./user.interfaces";
 
 const authProviderSchema = new mongoose.Schema<IAuthProvider>(
   {
@@ -57,10 +51,12 @@ const userSchema = new mongoose.Schema<IUser>(
       type: Boolean,
       default: false,
     },
-    transaction: { type: [String], default: [] },
-    currency: { type: String, default: CURRENCY.BDT },
     auths: { type: [authProviderSchema] },
-    balance: { type: Number, default: 50 },
+    walletId: {
+      type: Schema.Types.ObjectId,
+      ref: "wallet",
+    },
+    isAgentApproved: { type: Boolean, default: false },
   },
   {
     timestamps: true,
@@ -68,4 +64,4 @@ const userSchema = new mongoose.Schema<IUser>(
   }
 );
 
-export const userModel = mongoose.model<IUser>("users", userSchema);
+export const userModel = mongoose.model<IUser>("user", userSchema);
