@@ -25,7 +25,14 @@ export interface ITransaction {
     user:Types.ObjectId,
     amount:number,
     type:TransactionType,
-    initiatedBy:TransactionInitiatedBy ,
+    initiatedBy:TransactionInitiatedBy,
     fromWallet:Types.ObjectId,
     toWallet:Types.ObjectId,
 }
+
+/**
+ * user will provide while transaction
+ * 1. Transaction type
+ * 2. toWallet
+ * 3. Amount
+ */

@@ -18,7 +18,7 @@ export interface IWallet {
     user:Types.ObjectId,
     balance?:number,
     currency?:WALLET_CURRENCY,
-    status?:WALLET_STATUS,
+    walletStatus?:WALLET_STATUS,
     limit?:number,
     transactions?:Types.ObjectId[];
 }
