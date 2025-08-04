@@ -32,6 +32,7 @@ export interface IUser {
     auths:IAuthProvider[],
     status?:USER_STATUS,
     isVerified?:boolean;
+    isagent?:boolean;
     isDeleted?:boolean,
     walletId?:Types.ObjectId,
     isAgentApproved?:boolean;

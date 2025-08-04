@@ -86,9 +86,23 @@ const createUser = async (payload: IUser) => {
   }
 };
 
+// get all user and agent combined
+const allUserAndAgents = async () => {
+  const usersAgents = await userModel.find();
+  if (!usersAgents || usersAgents === null) {
+    if (envVars.NODE_ENV === "Development") {
+      console.log("Neither user nor agent created yet");
+    }
+  }
+  const usersAgentsCount = await userModel.countDocuments();
+  return {
+    meta: usersAgentsCount,
+    data: usersAgents,
+  };
+};
 // get all user
 const alluser = async () => {
-  const users = await userModel.find();
+  const users = await userModel.find({role:ROLE.USER});
   if (!users || users === null) {
     if (envVars.NODE_ENV === "Development") {
       console.log("user not created yet");
@@ -169,10 +183,40 @@ const deleteUser = async (id: string) => {
   return true;
 };
 
+
+// get all agents
+const allAgents = async () => {
+  const agents = await userModel.find({role:ROLE.AGENT, isAgentApproved:true});
+  if (!agents || agents === null) {
+    if (envVars.NODE_ENV === "Development") {
+      console.log("user not created yet");
+    }
+  }
+  const agentsCount = await userModel.countDocuments();
+  return {
+    meta: agentsCount,
+    data: agents,
+  };
+};
+
+// get an agents by user id
+const getSingelAgent = async (id:string) => {
+  const agent = await userModel.find({_id:id, role:ROLE.AGENT, isAgentApproved:true});
+  if (!agent || agent === null) {
+    if (envVars.NODE_ENV === "Development") {
+      console.log("user not created yet");
+    }
+  }
+  return agent
+};
+
 export const userServices = {
   createUser,
+  allUserAndAgents,
   alluser,
   getUser,
   deleteUser,
   updateUser,
+  allAgents,
+  getSingelAgent,
 };

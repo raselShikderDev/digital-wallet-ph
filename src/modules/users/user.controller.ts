@@ -21,6 +21,20 @@ const createuser = asyncHandle(async(req:Request, res:Response, next:NextFunctio
     })
 })
 
+// get all user and agent combined
+const allUserAndAgents = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{    
+    const data = await userServices.alluser()
+    sendResponse(res, {
+    statusCode:StatusCodes.OK,
+    success:true,
+    message:"Successfully retrived all users and agents",
+    data:data.data,
+    meta:{
+        total:data.meta
+    },
+    })
+})
+
 // Retriving all user
 const allUser = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{    
     const data = await userServices.alluser()
@@ -84,10 +98,40 @@ const deleteUser = asyncHandle(async(req:Request, res:Response, next:NextFunctio
 })
 
 
+// Retriving all Agents
+const allAgents = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{    
+    const data = await userServices.allAgents()
+    sendResponse(res, {
+    statusCode:StatusCodes.OK,
+    success:true,
+    message:"Successfully retrived users",
+    data:data.data,
+    meta:{
+        total:data.meta
+    },
+    })
+})
+
+// Retriving an singel Agent by id
+const getSingelAgent = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{ 
+    const id = req.params.id   
+    const data = await userServices.getSingelAgent(id)
+    sendResponse(res, {
+    statusCode:StatusCodes.OK,
+    success:true,
+    message:"Successfully retrived users",
+    data:data,
+    })
+})
+
+
 export const userController = {
     createuser,
+    allUserAndAgents,
     allUser,
     getUser,
     deleteUser,
     updateUser,
+    allAgents,
+    getSingelAgent
 }

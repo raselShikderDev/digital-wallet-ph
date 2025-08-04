@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { JwtPayload } from "jsonwebtoken";
 import { ITransaction } from "../transaction/transaction.interface";
 import { userModel } from "../users/user.model";
@@ -12,6 +11,11 @@ type RequiredTransactionInput = Pick<
   ITransaction,
   "amount" | "type" | "toWallet"
 >;
+
+
+const allWallet = async ()=>{
+
+}
 
 // User Sending money to another user - Send money
 const userSendMOney = async (
@@ -127,4 +131,5 @@ const userSendMOney = async (
 
 export const walletServices = {
   userSendMOney,
+  allWallet,
 };
