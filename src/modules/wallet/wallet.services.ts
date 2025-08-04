@@ -66,6 +66,8 @@ const walletStatusToggle = async (id: string) => {
   return updatedWallet;
 };
 
+/** ---------------- Transactions between user and agent ----------------- */
+
 // User Sending money to another user - Send money
 const userSendMOney = async (
   payload: RequiredTransactionInput,
@@ -78,42 +80,39 @@ const userSendMOney = async (
 
     // Sender wallet user
     const fromWalletUser = await userModel
-      .findById(decodedToken.id, "-password")
+      .findOne({ _id: decodedToken.id, role: ROLE.USER }, "-password")
       .populate("walletId");
     if (!fromWalletUser) {
       throw new myAppError(
         StatusCodes.BAD_REQUEST,
-        "Sender user does not valid"
+        `You are not allowed to make ${type}`
+      );
+    }
+
+    // Receiver wallet
+    const receiverWallet = await walletModel
+      .findOne({_id:toWallet, walletStatus:WALLET_STATUS.ACTIVE});
+    if (!receiverWallet) {
+      throw new myAppError(
+        StatusCodes.NOT_FOUND,
+        "Receiver is not allowed to make transaction"
       );
     }
 
     // Receiver wallet user
-    const receiverWallet = await walletModel
-      .findById(toWallet, "-password")
-      .populate("user", "-password");
-    if (!receiverWallet) {
-      throw new myAppError(StatusCodes.NOT_FOUND, "Receiver does not exists");
-    }
-
-    if (receiverWallet.walletStatus === WALLET_STATUS.BLOCKED) {
-      throw new myAppError(
-        StatusCodes.BAD_REQUEST,
-        `Receiver user are not allowed to make transaction`
-      );
+    const receiverWalletUser = await userModel
+      .findOne({ _id: receiverWallet.user, role: ROLE.USER }, "-password")
+      .populate("walletId");
+    if (!receiverWalletUser) {
+      throw new myAppError(StatusCodes.BAD_REQUEST, `Invalid Reciver`);
     }
 
     // Sender wallet
-    const senderWallet = await walletModel.findById(fromWalletUser.walletId);
+    const senderWallet = await walletModel.findOne({_id:fromWalletUser.walletId , walletStatus:WALLET_STATUS.ACTIVE});
     if (!senderWallet) {
       throw new myAppError(
         StatusCodes.NOT_FOUND,
-        "Sender wallet does not exists"
-      );
-    }
-    if (senderWallet.walletStatus === WALLET_STATUS.BLOCKED) {
-      throw new myAppError(
-        StatusCodes.BAD_REQUEST,
-        `You are not allowed to make transaction`
+        `You are not allowed to make ${type}`
       );
     }
 
@@ -189,18 +188,135 @@ const userCashOut = async (
 
     // Sender wallet user
     const fromWalletUser = await userModel
-      .findById(decodedToken.id, "-password")
+      .findOne({ _id: decodedToken.id, role: ROLE.USER }, "-password")
       .populate("walletId");
     if (!fromWalletUser) {
       throw new myAppError(
         StatusCodes.BAD_REQUEST,
-        "Sender user does not valid"
+        `You are not allowed to make ${type}`
+      );
+    }
+
+    // Receiver agent wallet
+    const receiverWalletUser = await userModel
+      .findOne({ walletId: toWallet, role: ROLE.AGENT, isAgentApproved: true })
+      .select("-password");
+    if (!receiverWalletUser) {
+      throw new myAppError(StatusCodes.NOT_FOUND, "Agent does not valid");
+    }
+
+    if (
+      receiverWalletUser.isAgentApproved === false ||
+      !(receiverWalletUser.role === ROLE.AGENT)
+    ) {
+      throw new myAppError(StatusCodes.BAD_REQUEST, "Receiver is not agent");
+    }
+
+    // Receiver wallet
+    const receiverWallet = await walletModel.findOne({_id:toWallet, walletStatus:WALLET_STATUS.ACTIVE});
+    if (!receiverWallet) {
+      throw new myAppError(
+        StatusCodes.NOT_FOUND,
+        "Agent is not allowed to make transaction"
+      );
+    }
+
+    // Sender wallet
+    const senderWallet = await walletModel.findOne({
+      _id: fromWalletUser.walletId,
+      walletStatus: WALLET_STATUS.ACTIVE,
+    });
+    if (!senderWallet) {
+      throw new myAppError(
+        StatusCodes.NOT_FOUND,
+        "You are not allowed to make transaction"
+      );
+    }
+
+    // Updating sender wallet balance by static hook
+    const updatedSenderWallet = await walletModel.balanceAvailablity(
+      amount,
+      senderWallet._id,
+      session
+    );
+    if (!updatedSenderWallet) {
+      throw new myAppError(
+        StatusCodes.BAD_GATEWAY,
+        "Updating sender balance is failed"
+      );
+    }
+
+    // Updating Receiver balance
+    const updateAgentWallet = await walletModel.findOneAndUpdate(
+      {
+        _id: toWallet,
+        walletStatus: WALLET_STATUS.ACTIVE,
+      },
+      { $inc: { balance: +amount } },
+      { runValidators: true, new: true, session }
+    );
+
+    if (!updateAgentWallet) {
+      throw new myAppError(
+        StatusCodes.BAD_GATEWAY,
+        "Updating receiver balance is failed"
+      );
+    }
+
+    // Creating transaction History
+    const senderPayload: ITransaction = {
+      user: decodedToken.id,
+      amount,
+      type: type,
+      initiatedBy: decodedToken.role,
+      fromWallet: updatedSenderWallet._id!,
+      toWallet: updateAgentWallet._id!,
+    };
+
+    const tansactionHistory = await transactionModel.create([senderPayload], {
+      session,
+    });
+    if (!tansactionHistory) {
+      throw new myAppError(
+        StatusCodes.BAD_GATEWAY,
+        "Creatinging transaction history is failed"
+      );
+    }
+
+    await session.commitTransaction();
+    return tansactionHistory;
+  } catch (error) {
+    session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
+// Agent top up to user by CASH_IN and user also reciveign as CASH_IN (but actually for agent sending the money)
+const agentCashIn = async (
+  payload: RequiredTransactionInput,
+  decodedToken: JwtPayload
+) => {
+  const session = await transactionModel.startSession();
+  session.startTransaction();
+  try {
+    const { amount, type, toWallet } = payload;
+
+    // Agent wallet who is the sender
+    const fromWalletUser = await userModel
+      .findOne({ _id: decodedToken.id, role: ROLE.AGENT }, "-password")
+      .populate("walletId");
+    if (!fromWalletUser) {
+      throw new myAppError(
+        StatusCodes.BAD_REQUEST,
+        `You are not allowed to make ${type}`
       );
     }
 
     // Receiver wallet user
     const receiverWalletUser = await userModel
-      .findOne({walletId:toWallet})
+      .findOne({ walletId: toWallet, role: ROLE.USER })
       .select("-password");
     if (!receiverWalletUser) {
       throw new myAppError(StatusCodes.NOT_FOUND, "Agent does not exists");
@@ -310,4 +426,5 @@ export const walletServices = {
   singelWallet,
   walletStatusToggle,
   userCashOut,
+  agentCashIn,
 };
