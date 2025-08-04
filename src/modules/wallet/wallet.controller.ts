@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
-import { walletServices } from "./wallet.servicess";
+import { walletServices } from "./wallet.services";
 import { StatusCodes } from "http-status-codes";
 import sendResponse from "../../utils/sendResponse";
 import { asyncHandle } from "../../utils/asyncHandeler";
@@ -14,7 +14,7 @@ const allWallet = asyncHandle(
     sendResponse(res, {
       statusCode: StatusCodes.OK,
       success: true,
-      message: "Send money request is successfull",
+      message: "Successfully retrived all wallets",
       data: walletsData.data,
       meta: {
         total: walletsData.meta,
@@ -34,25 +34,31 @@ const singelWallet = asyncHandle(
     sendResponse(res, {
       statusCode: StatusCodes.OK,
       success: true,
-      message: "Send money request is successfull",
+      message: "Successfully retrived wallet",
       data: walletData,
     });
   }
 );
 
 // Update wallet status Block/Active by id - only admins are allowed
-const updateWalletStatus = asyncHandle(
+const eWalletStatusToggle = asyncHandle(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.id;
     if (!mongoose.isValidObjectId(id)) {
       throw new myAppError(StatusCodes.BAD_REQUEST, "User id is not valid");
     }
-    const status = req.body;
-    const walletData = await walletServices.updateWalletStatus(id, status);
+    
+    const walletData = await walletServices.eWalletStatusToggle(id);
+    if (!walletData) {
+        throw new myAppError(
+          StatusCodes.BAD_REQUEST,
+          "Failed to update wallet status"
+        );
+      }
     sendResponse(res, {
       statusCode: StatusCodes.OK,
       success: true,
-      message: "Send money request is successfull",
+      message: `Wallet status chnaged to ${walletData.walletStatus}`,
       data: walletData,
     });
   }
@@ -81,5 +87,5 @@ export const walletController = {
   userSendMOney,
   allWallet,
   singelWallet,
-  updateWalletStatus,
+  eWalletStatusToggle,
 };

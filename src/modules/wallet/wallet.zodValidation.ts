@@ -1,6 +1,5 @@
 import z from "zod";
 import { TransactionType } from "../transaction/transaction.interface";
-import { WALLET_STATUS } from "./wallet.interface";
 
 
 export const userSendMoneyZodSchema = z.object({
@@ -10,5 +9,5 @@ export const userSendMoneyZodSchema = z.object({
 })
 
 export const updateWalletStatusZodSchema = z.object({
-    status:z.enum(Object.values(WALLET_STATUS)),
+    status:z.enum(["ACTIVE", "BLOCKED"]),
 })

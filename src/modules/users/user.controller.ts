@@ -100,10 +100,11 @@ const deleteUser = asyncHandle(async(req:Request, res:Response, next:NextFunctio
 // Retriving all Agents
 const allAgents = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{    
     const data = await userServices.allAgents()
+    
     sendResponse(res, {
     statusCode:StatusCodes.OK,
     success:true,
-    message:"Successfully retrived users",
+    message:"Successfully retrived all agents",
     data:data.data,
     meta:{
         total:data.meta
@@ -118,7 +119,7 @@ const getSingelAgent = asyncHandle(async(req:Request, res:Response, next:NextFun
     sendResponse(res, {
     statusCode:StatusCodes.OK,
     success:true,
-    message:"Successfully retrived users",
+    message:"Successfully retrived agent",
     data:data,
     })
 })
@@ -132,11 +133,17 @@ const agentApproval = asyncHandle(async(req:Request, res:Response, next:NextFunc
     }
     const data = await userServices.agentApproval(id)
     
+    if (data.updatedToAgent || data.updatedToAgent === null) {
+    throw new myAppError(
+      StatusCodes.BAD_REQUEST,
+      "Failed to update user to agent"
+    );
+  }
     sendResponse(res, {
     statusCode:StatusCodes.OK,
     success:true,
-    message:"Successfully updated user role to agent",
-    data:data,
+    message:data.message,
+    data:data.alreadyApproved,
     })
 })
 
@@ -153,7 +160,7 @@ const agentStatusToggle = asyncHandle(async(req:Request, res:Response, next:Next
     sendResponse(res, {
     statusCode:StatusCodes.OK,
     success:true,
-    message:"Successfully updated Agent status",
+    message:`Agent successfully ${data.isAgentApproved ? "Approved" : "Suspended"}`,
     data:data,
     })
 })

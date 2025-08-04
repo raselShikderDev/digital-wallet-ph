@@ -14,45 +14,55 @@ type RequiredTransactionInput = Pick<
 >;
 
 // Retrving all wallet
-const allWallet = async ()=>{
-  const wallets = await walletModel.find()
+const allWallet = async () => {
+  const wallets = await walletModel.find();
   if (!wallets || wallets === null) {
-      if (envVars.NODE_ENV === "Development") {
-        // eslint-disable-next-line no-console
-        console.log("Neither user nor agent created yet");
-      }
+    if (envVars.NODE_ENV === "Development") {
+      // eslint-disable-next-line no-console
+      console.log("Neither user nor agent created yet");
     }
-    const walletsCount = await walletModel.countDocuments();
-    return {
-      meta: walletsCount,
-      data: wallets,
-    };
-}
-
+  }
+  const walletsCount = await walletModel.countDocuments();
+  return {
+    meta: walletsCount,
+    data: wallets,
+  };
+};
 
 // Retrving an singel wallet by id
-const singelWallet = async (id:string)=>{
-  const wallet = await walletModel.findById(id)
+const singelWallet = async (id: string) => {
+  const wallet = await walletModel.findById(id);
   if (!wallet) {
-      if (envVars.NODE_ENV === "Development") {
-        // eslint-disable-next-line no-console
-        console.log("Neither user nor agent created yet");
-      }
+    if (envVars.NODE_ENV === "Development") {
+      // eslint-disable-next-line no-console
+      console.log("Neither user nor agent created yet");
     }
-    return wallet
-}
+  }
+  return wallet;
+};
 
 // Update wallet status Block/Active by id - only admins are allowed
-const updateWalletStatus = async (id:string, status:string)=>{
-  const updatedWallet = await walletModel.findOneAndUpdate({_id:id, walletStatus:{$ne:{status}}}, {walletStatus:status})
-  if (!updatedWallet) {
-      if (envVars.NODE_ENV === "Development") {
-        // eslint-disable-next-line no-console
-        console.log("Updating wallet status is failed");
+const eWalletStatusToggle = async (id: string) => {
+  const updatedWallet = await walletModel.findOneAndUpdate(
+    { _id: id},
+    [{
+      $set:{
+        walletStatus:{$cond:{
+          if:{$eq:["$walletStatus", WALLET_STATUS.ACTIVE]},
+          then:WALLET_STATUS.BLOCKED,
+          else:WALLET_STATUS.ACTIVE
+        }}
       }
-    }
-    return updatedWallet
-}
+    }]
+  );
+  if (!updatedWallet) {
+    throw new myAppError(
+      StatusCodes.BAD_REQUEST,
+      "Failed to update wallet status"
+    );
+  }
+  return updatedWallet;
+};
 
 // User Sending money to another user - Send money
 const userSendMOney = async (
@@ -118,8 +128,6 @@ const userSendMOney = async (
       );
     }
 
-   
-
     // Updating Receiver balance
     const updateReceiverWallet = await walletModel.findOneAndUpdate(
       {
@@ -137,8 +145,7 @@ const userSendMOney = async (
       );
     }
 
-
-     // Creating transaction History 
+    // Creating transaction History
     const senderPayload: ITransaction = {
       user: decodedToken.id,
       amount,
@@ -148,7 +155,9 @@ const userSendMOney = async (
       toWallet: updateReceiverWallet._id!,
     };
 
-    const tansactionHistory = await transactionModel.create([senderPayload], {session});
+    const tansactionHistory = await transactionModel.create([senderPayload], {
+      session,
+    });
     if (!tansactionHistory) {
       throw new myAppError(
         StatusCodes.BAD_GATEWAY,
@@ -170,5 +179,5 @@ export const walletServices = {
   userSendMOney,
   allWallet,
   singelWallet,
-  updateWalletStatus,
+  eWalletStatusToggle,
 };
