@@ -9,9 +9,6 @@ import { asyncHandle } from "../../utils/asyncHandeler"
 // Get all wallet - Only admin and super admins are allowed
 const allWallet = asyncHandle(async (req:Request, res:Response, next:NextFunction)=>{
 const walletsData = await walletServices.allWallet()
-    // if (walletsData.data.length === 0) {
-        
-    // }
     sendResponse(res, {
     statusCode:StatusCodes.OK,
     success:true,
@@ -20,6 +17,17 @@ const walletsData = await walletServices.allWallet()
     meta:{
         total:walletsData.meta
     }
+    })
+})
+
+// Get singel wallet by id - Only admin and super admins are allowed
+const singelWallet = asyncHandle(async (req:Request, res:Response, next:NextFunction)=>{
+const walletData = await walletServices.allWallet()
+    sendResponse(res, {
+    statusCode:StatusCodes.OK,
+    success:true,
+    message:"Send money request is successfull",
+    data:walletData
     })
 })
 
@@ -40,5 +48,6 @@ const userSendMOney = asyncHandle(async (req:Request, res:Response, next:NextFun
 
 export const walletController = {
     userSendMOney,
-    allWallet
+    allWallet,
+    singelWallet
 }

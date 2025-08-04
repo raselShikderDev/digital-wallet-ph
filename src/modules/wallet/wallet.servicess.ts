@@ -13,7 +13,7 @@ type RequiredTransactionInput = Pick<
   "amount" | "type" | "toWallet"
 >;
 
-
+// Retrving all wallet
 const allWallet = async ()=>{
   const wallets = await walletModel.find()
   if (!wallets || wallets === null) {
@@ -27,6 +27,19 @@ const allWallet = async ()=>{
       meta: walletsCount,
       data: wallets,
     };
+}
+
+
+// Retrving an singel wallet by id
+const singelWallet = async (id:string)=>{
+  const wallet = await walletModel.findById(id)
+  if (!wallet) {
+      if (envVars.NODE_ENV === "Development") {
+        // eslint-disable-next-line no-console
+        console.log("Neither user nor agent created yet");
+      }
+    }
+    return wallet
 }
 
 // User Sending money to another user - Send money
@@ -144,4 +157,5 @@ const userSendMOney = async (
 export const walletServices = {
   userSendMOney,
   allWallet,
+  singelWallet,
 };
