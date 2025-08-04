@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { NextFunction, Request, Response } from "express";
 import { asyncHandle } from "../../utils/asyncHandeler";
 import { userServices } from "./user.service";
@@ -17,6 +18,20 @@ const createuser = asyncHandle(async(req:Request, res:Response, next:NextFunctio
     success:true,
     message:"User successfully created",
     data:newUser,
+    })
+})
+
+// get all user and agent combined
+const allUserAndAgents = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{    
+    const data = await userServices.alluser()
+    sendResponse(res, {
+    statusCode:StatusCodes.OK,
+    success:true,
+    message:"Successfully retrived all users and agents",
+    data:data.data,
+    meta:{
+        total:data.meta
+    },
     })
 })
 
@@ -51,13 +66,14 @@ const getUser = asyncHandle(async(req:Request, res:Response, next:NextFunction)=
 
 // Updating user by id
 const updateUser = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{
-    console.log("Got request for update user");
+    
     const id = req.params.id
+    const decodedToken = req.user
     if (!mongoose.isValidObjectId(id)) {
         throw new myAppError(StatusCodes.BAD_REQUEST, "User id is not valid")
     }
     const payload = req.body
-    const data = await userServices.updateUser(id, payload)
+    const data = await userServices.updateUser(id, payload, decodedToken)
     sendResponse(res, {
     statusCode:StatusCodes.OK,
     success:true,
@@ -82,10 +98,77 @@ const deleteUser = asyncHandle(async(req:Request, res:Response, next:NextFunctio
 })
 
 
+// Retriving all Agents
+const allAgents = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{    
+    const data = await userServices.allAgents()
+    sendResponse(res, {
+    statusCode:StatusCodes.OK,
+    success:true,
+    message:"Successfully retrived users",
+    data:data.data,
+    meta:{
+        total:data.meta
+    },
+    })
+})
+
+// Retriving an singel Agent by id
+const getSingelAgent = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{ 
+    const id = req.params.id   
+    const data = await userServices.getSingelAgent(id)
+    sendResponse(res, {
+    statusCode:StatusCodes.OK,
+    success:true,
+    message:"Successfully retrived users",
+    data:data,
+    })
+})
+
+
+// Updating user role to agent by id - only allowed for admins
+const agentApproval = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{
+    const id = req.params.id
+    if (!mongoose.isValidObjectId(id)) {
+        throw new myAppError(StatusCodes.BAD_REQUEST, "User id is not valid")
+    }
+    const data = await userServices.agentApproval(id)
+    
+    sendResponse(res, {
+    statusCode:StatusCodes.OK,
+    success:true,
+    message:"Successfully updated user role to agent",
+    data:data,
+    })
+})
+
+
+// update agent status in a toggle system by id - only admins are allowed
+const agentStatusToggle = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{
+
+    const id = req.params.id
+    if (!mongoose.isValidObjectId(id)) {
+        throw new myAppError(StatusCodes.BAD_REQUEST, "User id is not valid")
+    }
+    const data = await userServices.agentStatusToggle(id)
+    
+    sendResponse(res, {
+    statusCode:StatusCodes.OK,
+    success:true,
+    message:"Successfully updated Agent status",
+    data:data,
+    })
+})
+
+
 export const userController = {
     createuser,
+    allUserAndAgents,
     allUser,
     getUser,
     deleteUser,
     updateUser,
+    allAgents,
+    getSingelAgent,
+    agentApproval,
+    agentStatusToggle,
 }
