@@ -126,17 +126,35 @@ const getSingelAgent = asyncHandle(async(req:Request, res:Response, next:NextFun
 
 
 // Updating user role to agent by id - only allowed for admins
-const updateToAgentRole = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{
+const agentApproval = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{
     const id = req.params.id
     if (!mongoose.isValidObjectId(id)) {
         throw new myAppError(StatusCodes.BAD_REQUEST, "User id is not valid")
     }
-    const data = await userServices.updateToAgentRole(id)
+    const data = await userServices.agentApproval(id)
     
     sendResponse(res, {
     statusCode:StatusCodes.OK,
     success:true,
     message:"Successfully updated user role to agent",
+    data:data,
+    })
+})
+
+
+// update agent status in a toggle system by id - only admins are allowed
+const agentStatusToggle = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{
+
+    const id = req.params.id
+    if (!mongoose.isValidObjectId(id)) {
+        throw new myAppError(StatusCodes.BAD_REQUEST, "User id is not valid")
+    }
+    const data = await userServices.agentStatusToggle(id)
+    
+    sendResponse(res, {
+    statusCode:StatusCodes.OK,
+    success:true,
+    message:"Successfully updated Agent status",
     data:data,
     })
 })
@@ -151,5 +169,6 @@ export const userController = {
     updateUser,
     allAgents,
     getSingelAgent,
-    updateToAgentRole,
+    agentApproval,
+    agentStatusToggle,
 }

@@ -23,7 +23,9 @@ router.get("/:id", authCheck(ROLE.ADMIN, ROLE.SUPER_ADMIN), userController.getSi
 // update user by id
 router.patch("/:id", authCheck(...Object.values(ROLE)), requestValidator(updateUserZodValidator), userController.updateUser)
 // update user role to agent by id - (Only admins and super admins are allowed)
-router.patch("/:id", authCheck(ROLE.ADMIN, ROLE.SUPER_ADMIN), userController.updateUser)
+router.patch("/:id", authCheck(ROLE.ADMIN, ROLE.SUPER_ADMIN), userController.agentApproval)
+// update agent status to in a toggle system by id - (Only admins and super admins are allowed)
+router.patch("/:id", authCheck(ROLE.ADMIN, ROLE.SUPER_ADMIN), userController.agentStatusToggle)
 // Delete user by id - (Only admins and super admins are allowed)
 router.delete("/:id", authCheck(ROLE.ADMIN, ROLE.SUPER_ADMIN), userController.deleteUser)
 

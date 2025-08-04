@@ -102,7 +102,7 @@ const allUserAndAgents = async () => {
 };
 // get all user
 const alluser = async () => {
-  const users = await userModel.find({role:ROLE.USER});
+  const users = await userModel.find({ role: ROLE.USER });
   if (!users || users === null) {
     if (envVars.NODE_ENV === "Development") {
       console.log("user not created yet");
@@ -183,10 +183,12 @@ const deleteUser = async (id: string) => {
   return true;
 };
 
-
 // get all agents
 const allAgents = async () => {
-  const agents = await userModel.find({role:ROLE.AGENT, isAgentApproved:true});
+  const agents = await userModel.find({
+    role: ROLE.AGENT,
+    isAgentApproved: true,
+  });
   if (!agents || agents === null) {
     if (envVars.NODE_ENV === "Development") {
       console.log("user not created yet");
@@ -200,25 +202,63 @@ const allAgents = async () => {
 };
 
 // get an agents by user id
-const getSingelAgent = async (id:string) => {
-  const agent = await userModel.find({_id:id, role:ROLE.AGENT, isAgentApproved:true});
+const getSingelAgent = async (id: string) => {
+  const agent = await userModel.find({
+    _id: id,
+    role: ROLE.AGENT,
+    isAgentApproved: true,
+  });
   if (!agent || agent === null) {
     if (envVars.NODE_ENV === "Development") {
       console.log("user not created yet");
     }
   }
-  return agent
+  return agent;
 };
 
 // update role user to agent by id - only admins are allowed
-const updateToAgentRole = async (id: string) => {
-  const updatedToAgent = await userModel.findOneAndUpdate({_id:id, role:ROLE.USER, isAgentApproved:false}, {role:ROLE.AGENT, isAgentApproved:true}, {runValidators:true, new:true});
-  
+const agentApproval = async (id: string) => {
+  const updatedToAgent = await userModel.findOneAndUpdate(
+    { _id: id, role: ROLE.USER, isAgentApproved: false },
+    { role: ROLE.AGENT, isAgentApproved: true },
+    { runValidators: true, new: true }
+  );
+
   if (!updatedToAgent || updatedToAgent === null) {
     if (envVars.NODE_ENV === "Development") {
       console.log("User not created yet");
     }
-    throw new myAppError(StatusCodes.BAD_REQUEST, "Failed to update user to agent");
+    throw new myAppError(
+      StatusCodes.BAD_REQUEST,
+      "Failed to update user to agent"
+    );
+  }
+
+  return updatedToAgent;
+};
+
+// update agent status in a toggle system by id - only admins are allowed
+const agentStatusToggle = async (id: string) => {
+  const updatedToAgent = await userModel.findOneAndUpdate(
+    { _id: id, role: ROLE.AGENT },
+    [
+      {
+        $set: {
+          isAgentApproved: { $not: "$isAgentApproved" },
+        },
+      },
+    ],
+    { runValidators: true, new: true }
+  );
+
+  if (!updatedToAgent || updatedToAgent === null) {
+    if (envVars.NODE_ENV === "Development") {
+      console.log("User not created yet");
+    }
+    throw new myAppError(
+      StatusCodes.BAD_REQUEST,
+      "Failed to update agent status"
+    );
   }
 
   return updatedToAgent;
@@ -233,5 +273,6 @@ export const userServices = {
   updateUser,
   allAgents,
   getSingelAgent,
-  updateToAgentRole,
+  agentApproval,
+  agentStatusToggle,
 };
