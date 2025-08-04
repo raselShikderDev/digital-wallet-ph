@@ -125,6 +125,23 @@ const getSingelAgent = asyncHandle(async(req:Request, res:Response, next:NextFun
 })
 
 
+// Updating user role to agent by id - only allowed for admins
+const updateToAgentRole = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{
+    const id = req.params.id
+    if (!mongoose.isValidObjectId(id)) {
+        throw new myAppError(StatusCodes.BAD_REQUEST, "User id is not valid")
+    }
+    const data = await userServices.updateToAgentRole(id)
+    
+    sendResponse(res, {
+    statusCode:StatusCodes.OK,
+    success:true,
+    message:"Successfully updated user role to agent",
+    data:data,
+    })
+})
+
+
 export const userController = {
     createuser,
     allUserAndAgents,
@@ -133,5 +150,6 @@ export const userController = {
     deleteUser,
     updateUser,
     allAgents,
-    getSingelAgent
+    getSingelAgent,
+    updateToAgentRole,
 }

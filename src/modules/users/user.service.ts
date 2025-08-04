@@ -210,6 +210,20 @@ const getSingelAgent = async (id:string) => {
   return agent
 };
 
+// update role user to agent by id - only admins are allowed
+const updateToAgentRole = async (id: string) => {
+  const updatedToAgent = await userModel.findOneAndUpdate({_id:id, role:ROLE.USER, isAgentApproved:false}, {role:ROLE.AGENT, isAgentApproved:true}, {runValidators:true, new:true});
+  
+  if (!updatedToAgent || updatedToAgent === null) {
+    if (envVars.NODE_ENV === "Development") {
+      console.log("User not created yet");
+    }
+    throw new myAppError(StatusCodes.BAD_REQUEST, "Failed to update user to agent");
+  }
+
+  return updatedToAgent;
+};
+
 export const userServices = {
   createUser,
   allUserAndAgents,
@@ -219,4 +233,5 @@ export const userServices = {
   updateUser,
   allAgents,
   getSingelAgent,
+  updateToAgentRole,
 };
