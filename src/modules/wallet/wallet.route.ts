@@ -14,6 +14,8 @@ router.post("/user-send-money", requestValidator(userSendMoneyZodSchema), authCh
 router.post("/all-wallets", authCheck(ROLE.SUPER_ADMIN, ROLE.ADMIN), walletController.allWallet)
 // get wallet by id - only for admins and super admins
 router.post("/:id", authCheck(ROLE.SUPER_ADMIN, ROLE.ADMIN), walletController.singelWallet)
+// Update wallet status Block/Active by id - only for admins and super admins
+router.patch("/:id", authCheck(ROLE.SUPER_ADMIN, ROLE.ADMIN), walletController.updateWalletStatus)
 
 
 export const walletRoute = router

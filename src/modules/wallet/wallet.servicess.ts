@@ -42,6 +42,18 @@ const singelWallet = async (id:string)=>{
     return wallet
 }
 
+// Update wallet status Block/Active by id - only admins are allowed
+const updateWalletStatus = async (id:string, status:string)=>{
+  const updatedWallet = await walletModel.findOneAndUpdate({_id:id, walletStatus:{$ne:{status}}}, {walletStatus:status})
+  if (!updatedWallet) {
+      if (envVars.NODE_ENV === "Development") {
+        // eslint-disable-next-line no-console
+        console.log("Updating wallet status is failed");
+      }
+    }
+    return updatedWallet
+}
+
 // User Sending money to another user - Send money
 const userSendMOney = async (
   payload: RequiredTransactionInput,
@@ -158,4 +170,5 @@ export const walletServices = {
   userSendMOney,
   allWallet,
   singelWallet,
+  updateWalletStatus,
 };
