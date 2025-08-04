@@ -1,4 +1,4 @@
-import { Types } from "mongoose"
+import mongoose, { Model, Types } from "mongoose"
 
 export enum WALLET_CURRENCY{
     BDT = "BDT",
@@ -21,4 +21,8 @@ export interface IWallet {
     walletStatus?:WALLET_STATUS,
     limit?:number,
     transactions?:Types.ObjectId[];
+}
+
+export interface IBalanceAvailablity extends Model<IWallet>{
+    balanceAvailablity(requestedBalance: number, senderWallet: Types.ObjectId, session:mongoose.ClientSession):Promise<IWallet> | null
 }

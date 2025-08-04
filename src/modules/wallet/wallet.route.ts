@@ -9,7 +9,7 @@ import { userSendMoneyZodSchema } from "./wallet.zodValidation";
 const router = Router()
 
 // Send money for user
-router.post("/user-send-money", requestValidator(userSendMoneyZodSchema), authCheck(ROLE.USER), walletController.userSendMOney)
+router.post("/user-send-money", requestValidator(userSendMoneyZodSchema), authCheck(ROLE.USER, ROLE.SUPER_ADMIN, ROLE.ADMIN), walletController.userSendMOney)
 
 
 export const walletRoute = router

@@ -3,9 +3,10 @@ import { NextFunction, Request, Response } from "express"
 import { walletServices } from "./wallet.servicess"
 import { StatusCodes } from "http-status-codes"
 import sendResponse from "../../utils/sendResponse"
+import { asyncHandle } from "../../utils/asyncHandeler"
 
 
-const userSendMOney = async (req:Request, res:Response, next:NextFunction)=>{
+const userSendMOney = asyncHandle(async (req:Request, res:Response, next:NextFunction)=>{
     const payload = req.body
     const decodedToken = req.user
     const sendMoneyData = await walletServices.userSendMOney(payload, decodedToken)
@@ -14,10 +15,10 @@ const userSendMOney = async (req:Request, res:Response, next:NextFunction)=>{
     sendResponse(res, {
     statusCode:StatusCodes.OK,
     success:true,
-    message:"Successfully updated user",
+    message:"Send money request is successfull",
     data:sendMoneyData,
     })
-}
+})
 
 
 export const walletController = {

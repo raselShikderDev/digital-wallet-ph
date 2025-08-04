@@ -1,0 +1,60 @@
+import { JwtPayload } from "jsonwebtoken";
+import { userModel } from "../users/user.model";
+import myAppError from "../../errorHelper/myAppError";
+import { StatusCodes } from "http-status-codes";
+import { transactionModel } from "./transaction.model";
+
+
+// View all transactin of loggedIn user
+const viewTransactionsHistory = async (decodedToken: JwtPayload) => {
+  const { id } = decodedToken;
+
+  const user = await userModel.findById(id, "-password").populate("walletId");
+  if (!user) {
+      throw new myAppError(
+        StatusCodes.NOT_FOUND,
+        "Retrving wallet User is failed"
+      );
+    }
+
+    const transactions = await transactionModel.find({$or:[{fromWallet:user.walletId}, {toWallet:user.walletId}]}).sort({createdAt: -1})
+
+    if (transactions.length === 0) {
+      throw new myAppError(
+        StatusCodes.NOT_FOUND,
+        "Retrving transaction is failed"
+      );
+    }
+
+    return transactions
+};
+
+
+// View all transactin of loggedIn user
+const singelUserTransaction = async (userId:string) => {
+  
+  const user = await userModel.findById(userId, "-password").populate("walletId");
+  if (!user) {
+      throw new myAppError(
+        StatusCodes.NOT_FOUND,
+        "Retrving wallet User is failed"
+      );
+    }
+
+    const transactions = await transactionModel.find({$or:[{fromWallet:user.walletId}, {toWallet:user.walletId}]}).sort({createdAt: -1})
+
+    if (transactions.length === 0) {
+      throw new myAppError(
+        StatusCodes.NOT_FOUND,
+        "Retrving transaction is failed"
+      );
+    }
+
+    return transactions
+};
+
+
+export const transactionServices = {
+  viewTransactionsHistory,
+  singelUserTransaction
+};

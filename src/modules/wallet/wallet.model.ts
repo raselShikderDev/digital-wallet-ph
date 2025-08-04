@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { IWallet, WALLET_CURRENCY, WALLET_STATUS } from "./wallet.interface";
+import { IBalanceAvailablity, IWallet, WALLET_CURRENCY, WALLET_STATUS } from "./wallet.interface";
 import myAppError from "../../errorHelper/myAppError";
 import { StatusCodes } from "http-status-codes";
 
@@ -29,14 +29,14 @@ const walletSchema = new mongoose.Schema<IWallet>(
       default: 50,
     },
     transactions: {
-    type: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "transaction", 
-      },
-    ],
-    default: [], 
-  },
+      type: [
+        {
+          type: Schema.Types.ObjectId,
+          ref: "transaction",
+        },
+      ],
+      default: [],
+    },
   },
   {
     timestamps: true,
@@ -44,42 +44,34 @@ const walletSchema = new mongoose.Schema<IWallet>(
   }
 );
 
-
-walletSchema.pre("save", function(next){
-if (this.isModified("balance") || this.isNew) {
-  if (this.balance! < 0) {
-     return next(new myAppError(StatusCodes.BAD_REQUEST, 'Insufficient balance'));
+// Checking Insufficient balance
+walletSchema.pre("save", function (next) {
+  if (this.isModified("balance") || this.isNew) {
+    if (this.balance! < 0) {
+      return next(
+        new myAppError(StatusCodes.BAD_REQUEST, "Insufficient balance")
+      );
+    }
   }
-}
-  next()
-})
+  next();
+});
 
-export const walletModel = mongoose.model<IWallet>("wallet", walletSchema);
+//checking balance availability
+walletSchema.static(
+  "balanceAvailablity",
+  async function (requestedBalance: number, senderWallet: string, session:mongoose.ClientSession) {
+    const wallet = await this.findOneAndUpdate(
+      { _id: senderWallet, balance: { $gt: requestedBalance } },
+      { $inc: { balance: -requestedBalance } },
+      { runValidators: true, new: true, session }
+    );
 
+    if (!wallet) {
+      throw new myAppError(StatusCodes.BAD_REQUEST, "Insufficient balance or wallet not found");
+    }
 
+    return wallet
+  }
+);
 
-
-// WalletSchema.pre(['findOneAndUpdate', 'updateOne', 'updateMany'], async function (next) {
-//   const update = this.getUpdate();
-//   const wallet = await this.model.findOne(this.getQuery());
-
-//   if (!wallet) {
-//     return next(new myAppError(StatusCodes.NOT_FOUND, 'Wallet not found'));
-//   }
-
-//   let newBalance = wallet.balance;
-
-//   if (update.balance !== undefined) {
-//     newBalance = update.balance;
-//   }
-
-//   if (update.$inc && update.$inc.balance !== undefined) {
-//     newBalance = wallet.balance + update.$inc.balance;
-//   }
-
-//   if (newBalance < 0) {
-//     return next(new myAppError(StatusCodes.BAD_REQUEST, 'Insufficient balance'));
-//   }
-
-//   next();
-// });
+export const walletModel = mongoose.model<IWallet, IBalanceAvailablity>("wallet", walletSchema);
