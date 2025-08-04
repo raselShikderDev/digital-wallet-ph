@@ -7,11 +7,6 @@ export enum USER_STATUS{
     BLOCKED = "BLOCKED",
 }
 
-export enum CURRENCY{
-    BDT = "BDT",
-    USD = "USD",
-    EUR = "EUR",
-}
 
 export enum ROLE {
     USER = "USER",
@@ -35,10 +30,9 @@ export interface IUser {
     picture?:string;
     role:ROLE;
     auths:IAuthProvider[],
-    balance?:number;
-    currency?:CURRENCY,
-    transaction?:string[]
     status?:USER_STATUS,
     isVerified?:boolean;
     isDeleted?:boolean,
+    walletId?:Types.ObjectId,
+    isAgentApproved?:boolean;
 }

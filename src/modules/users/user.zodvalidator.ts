@@ -1,5 +1,5 @@
 import z from "zod";
-import { CURRENCY, ROLE, USER_STATUS } from "./user.interfaces";
+import { ROLE, USER_STATUS } from "./user.interfaces";
 
 export const createUserZodValidator = z.object({
   name: z
@@ -32,7 +32,6 @@ export const createUserZodValidator = z.object({
 
 export const updateUserZodValidator = createUserZodValidator.partial().extend({
   role: z.enum(Object.values(ROLE) as [string]).optional(),
-  currency: z.enum(Object.values(CURRENCY) as [string]).optional(),
   status: z.enum(Object.values(USER_STATUS) as [string]).optional(),
   isDeleted: z.boolean({ message: "isDeleted must a boolean" }).optional(),
   isVerified: z.boolean({ message: "isVerified must a boolean" }).optional(),
