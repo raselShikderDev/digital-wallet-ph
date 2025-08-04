@@ -4,7 +4,7 @@ import authCheck from "../../middlewares/authCheck";
 import { ROLE } from "../users/user.interfaces";
 import requestValidator from "../../middlewares/requestValidator";
 import {
-  userSendMoneyZodSchema,
+  userTransactionZodSchema,
 } from "./wallet.zodValidation";
 
 const router = Router();
@@ -12,9 +12,17 @@ const router = Router();
 // Send money for user
 router.post(
   "/user-send-money",
-  requestValidator(userSendMoneyZodSchema),
-  authCheck(ROLE.USER, ROLE.SUPER_ADMIN, ROLE.ADMIN),
+  requestValidator(userTransactionZodSchema),
+  authCheck(ROLE.USER),
   walletController.userSendMOney
+);
+
+// User withdraw money by CASH_OUT to agent and agent receiving as CASH_OUT (but for agnet it receiving cash)
+router.post(
+  "/user-cash-out",
+  requestValidator(userTransactionZodSchema),
+  authCheck(ROLE.USER),
+  walletController.userCashOut
 );
 // all wallet - only for admins and super admins
 router.get(
@@ -26,7 +34,7 @@ router.get(
 router.patch(
   "/status/:id",
   authCheck(ROLE.SUPER_ADMIN, ROLE.ADMIN),
-  walletController.eWalletStatusToggle
+  walletController.walletStatusToggle
 );
 // get wallet by id - only for admins and super admins
 router.get(

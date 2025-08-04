@@ -7,6 +7,7 @@ import { StatusCodes } from "http-status-codes";
 import { walletModel } from "./wallet.model";
 import { WALLET_STATUS } from "./wallet.interface";
 import { envVars } from "../../config/env";
+import { ROLE } from "../users/user.interfaces";
 
 type RequiredTransactionInput = Pick<
   ITransaction,
@@ -42,19 +43,20 @@ const singelWallet = async (id: string) => {
 };
 
 // Update wallet status Block/Active by id - only admins are allowed
-const eWalletStatusToggle = async (id: string) => {
-  const updatedWallet = await walletModel.findOneAndUpdate(
-    { _id: id},
-    [{
-      $set:{
-        walletStatus:{$cond:{
-          if:{$eq:["$walletStatus", WALLET_STATUS.ACTIVE]},
-          then:WALLET_STATUS.BLOCKED,
-          else:WALLET_STATUS.ACTIVE
-        }}
-      }
-    }]
-  );
+const walletStatusToggle = async (id: string) => {
+  const updatedWallet = await walletModel.findOneAndUpdate({ _id: id }, [
+    {
+      $set: {
+        walletStatus: {
+          $cond: {
+            if: { $eq: ["$walletStatus", WALLET_STATUS.ACTIVE] },
+            then: WALLET_STATUS.BLOCKED,
+            else: WALLET_STATUS.ACTIVE,
+          },
+        },
+      },
+    },
+  ]);
   if (!updatedWallet) {
     throw new myAppError(
       StatusCodes.BAD_REQUEST,
@@ -175,9 +177,137 @@ const userSendMOney = async (
   }
 };
 
+// User withdraw money by CASH_OUT to agent and agent receiving as CASH_OUT (but for agnet it receiving cash)
+const userCashOut = async (
+  payload: RequiredTransactionInput,
+  decodedToken: JwtPayload
+) => {
+  const session = await transactionModel.startSession();
+  session.startTransaction();
+  try {
+    const { amount, type, toWallet } = payload;
+
+    // Sender wallet user
+    const fromWalletUser = await userModel
+      .findById(decodedToken.id, "-password")
+      .populate("walletId");
+    if (!fromWalletUser) {
+      throw new myAppError(
+        StatusCodes.BAD_REQUEST,
+        "Sender user does not valid"
+      );
+    }
+
+    // Receiver wallet user
+    const receiverWalletUser = await userModel
+      .findOne({walletId:toWallet})
+      .select("-password");
+    if (!receiverWalletUser) {
+      throw new myAppError(StatusCodes.NOT_FOUND, "Agent does not exists");
+    }
+
+    if (
+      receiverWalletUser.isAgentApproved === false ||
+      !(receiverWalletUser.role === ROLE.AGENT)
+    ) {
+      throw new myAppError(StatusCodes.BAD_REQUEST, "Receiver is not agent");
+    }
+
+    // Receiver wallet
+    const receiverWallet = await walletModel.findById(toWallet);
+    if (!receiverWallet) {
+      throw new myAppError(
+        StatusCodes.NOT_FOUND,
+        "Agents's wallet does not exists"
+      );
+    }
+
+    if (receiverWallet.walletStatus === WALLET_STATUS.BLOCKED) {
+      throw new myAppError(
+        StatusCodes.BAD_REQUEST,
+        `Agent are not allowed to make transaction`
+      );
+    }
+
+    // Sender wallet
+    const senderWallet = await walletModel.findById(fromWalletUser.walletId);
+    if (!senderWallet) {
+      throw new myAppError(
+        StatusCodes.NOT_FOUND,
+        "User wallet does not exists"
+      );
+    }
+    if (senderWallet.walletStatus === WALLET_STATUS.BLOCKED) {
+      throw new myAppError(
+        StatusCodes.BAD_REQUEST,
+        `You are not allowed to make transaction`
+      );
+    }
+
+    // Updating sender wallet balance by static hook
+    const updatedSenderWallet = await walletModel.balanceAvailablity(
+      amount,
+      senderWallet._id,
+      session
+    );
+    if (!updatedSenderWallet) {
+      throw new myAppError(
+        StatusCodes.BAD_GATEWAY,
+        "Updating sender balance is failed"
+      );
+    }
+
+    // Updating Receiver balance
+    const updateAgentWallet = await walletModel.findOneAndUpdate(
+      {
+        _id: toWallet,
+        walletStatus: WALLET_STATUS.ACTIVE,
+      },
+      { $inc: { balance: +amount } },
+      { runValidators: true, new: true, session }
+    );
+
+    if (!updateAgentWallet) {
+      throw new myAppError(
+        StatusCodes.BAD_GATEWAY,
+        "Updating receiver balance is failed"
+      );
+    }
+
+    // Creating transaction History
+    const senderPayload: ITransaction = {
+      user: decodedToken.id,
+      amount,
+      type: type,
+      initiatedBy: decodedToken.role,
+      fromWallet: updatedSenderWallet._id!,
+      toWallet: updateAgentWallet._id!,
+    };
+
+    const tansactionHistory = await transactionModel.create([senderPayload], {
+      session,
+    });
+    if (!tansactionHistory) {
+      throw new myAppError(
+        StatusCodes.BAD_GATEWAY,
+        "Creatinging transaction history is failed"
+      );
+    }
+
+    await session.commitTransaction();
+    return tansactionHistory;
+  } catch (error) {
+    session.abortTransaction();
+    throw error;
+  } finally {
+    session.endSession();
+  }
+};
+
 export const walletServices = {
   userSendMOney,
   allWallet,
   singelWallet,
-  eWalletStatusToggle,
+  walletStatusToggle,
+  userCashOut,
 };

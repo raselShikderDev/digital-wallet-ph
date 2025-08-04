@@ -41,20 +41,20 @@ const singelWallet = asyncHandle(
 );
 
 // Update wallet status Block/Active by id - only admins are allowed
-const eWalletStatusToggle = asyncHandle(
+const walletStatusToggle = asyncHandle(
   async (req: Request, res: Response, next: NextFunction) => {
     const id = req.params.id;
     if (!mongoose.isValidObjectId(id)) {
       throw new myAppError(StatusCodes.BAD_REQUEST, "User id is not valid");
     }
-    
-    const walletData = await walletServices.eWalletStatusToggle(id);
+
+    const walletData = await walletServices.walletStatusToggle(id);
     if (!walletData) {
-        throw new myAppError(
-          StatusCodes.BAD_REQUEST,
-          "Failed to update wallet status"
-        );
-      }
+      throw new myAppError(
+        StatusCodes.BAD_REQUEST,
+        "Failed to update wallet status"
+      );
+    }
     sendResponse(res, {
       statusCode: StatusCodes.OK,
       success: true,
@@ -77,7 +77,26 @@ const userSendMOney = asyncHandle(
     sendResponse(res, {
       statusCode: StatusCodes.OK,
       success: true,
-      message: "Send money request is successfull",
+      message: "Successfully Send Money",
+      data: sendMoneyData,
+    });
+  }
+);
+
+// User withdraw money by CASH_OUT to agent and agent receiving as CASH_OUT (but for agnet it receiving cash)
+const userCashOut = asyncHandle(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const payload = req.body;
+    const decodedToken = req.user;
+    const sendMoneyData = await walletServices.userCashOut(
+      payload,
+      decodedToken
+    );
+
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: "Successfully Cash Out",
       data: sendMoneyData,
     });
   }
@@ -87,5 +106,6 @@ export const walletController = {
   userSendMOney,
   allWallet,
   singelWallet,
-  eWalletStatusToggle,
+  walletStatusToggle,
+  userCashOut,
 };
