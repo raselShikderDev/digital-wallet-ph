@@ -66,7 +66,6 @@ const getUser = asyncHandle(async(req:Request, res:Response, next:NextFunction)=
 
 // Updating user by id
 const updateUser = asyncHandle(async(req:Request, res:Response, next:NextFunction)=>{
-    console.log("Got request for update user");
     const id = req.params.id
     const decodedToken = req.user
     if (!mongoose.isValidObjectId(id)) {
