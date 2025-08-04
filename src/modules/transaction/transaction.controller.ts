@@ -36,14 +36,34 @@ const singelUserTransaction = asyncHandle(async (req:Request, res:Response, next
     if (userTransactions.length === 0) {
       throw new myAppError(
         StatusCodes.NOT_FOUND,
-        "Retrving wallet User is failed"
+        "Retrving transaction is failed"
       );
     }
 
     sendResponse(res, {
     statusCode:StatusCodes.OK,
     success:true,
-    message:"Successfully retrived user transaction",
+    message:"Successfully transaction retrived",
+    data:userTransactions,
+    })
+})
+
+
+// View all transactin - Only Admin and super admin are allowed
+const allTransaction = asyncHandle(async (req:Request, res:Response, next:NextFunction)=>{
+  
+    const userTransactions = await transactionServices.allTransaction()
+    if (userTransactions.length === 0) {
+      throw new myAppError(
+        StatusCodes.NOT_FOUND,
+        "Retrving alltransaction is failed"
+      );
+    }
+    
+    sendResponse(res, {
+    statusCode:StatusCodes.OK,
+    success:true,
+    message:"Successfully retrived all transaction",
     data:userTransactions,
     })
 })
@@ -53,4 +73,5 @@ const singelUserTransaction = asyncHandle(async (req:Request, res:Response, next
 export const transactionController ={
     viewTransactionsHistory,
     singelUserTransaction,
+    allTransaction,
 }

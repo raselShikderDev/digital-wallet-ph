@@ -30,7 +30,7 @@ const viewTransactionsHistory = async (decodedToken: JwtPayload) => {
 };
 
 
-// View all transactin of loggedIn user
+// View all transactin of a singel user - only admin and super admin aare allowed
 const singelUserTransaction = async (userId:string) => {
   
   const user = await userModel.findById(userId, "-password").populate("walletId");
@@ -54,7 +54,24 @@ const singelUserTransaction = async (userId:string) => {
 };
 
 
+// View all transactin occured - only admin and super admin aare allowed
+const allTransaction = async () => {
+
+    const transactions = await transactionModel.find().sort({createdAt: -1})
+  
+    if (transactions.length === 0) {
+      throw new myAppError(
+        StatusCodes.NOT_FOUND,
+        "Retrving all transaction is failed"
+      );
+    }
+
+    return transactions
+};
+
+
 export const transactionServices = {
   viewTransactionsHistory,
-  singelUserTransaction
+  singelUserTransaction,
+  allTransaction,
 };
