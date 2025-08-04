@@ -53,7 +53,7 @@ const singelUserTransaction = asyncHandle(async (req:Request, res:Response, next
 const allTransaction = asyncHandle(async (req:Request, res:Response, next:NextFunction)=>{
   
     const userTransactions = await transactionServices.allTransaction()
-    if (userTransactions.length === 0) {
+    if (userTransactions.data.length === 0) {
       throw new myAppError(
         StatusCodes.NOT_FOUND,
         "Retrving alltransaction is failed"
@@ -64,7 +64,10 @@ const allTransaction = asyncHandle(async (req:Request, res:Response, next:NextFu
     statusCode:StatusCodes.OK,
     success:true,
     message:"Successfully retrived all transaction",
-    data:userTransactions,
+    data:userTransactions.data,
+    meta:{
+      total:userTransactions.meta,
+    }
     })
 })
 

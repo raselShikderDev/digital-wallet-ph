@@ -66,7 +66,12 @@ const allTransaction = async () => {
       );
     }
 
-    return transactions
+    const transactionCount = await transactionModel.countDocuments()
+
+    return {
+      meta:transactionCount,
+      data:transactions
+    }
 };
 
 

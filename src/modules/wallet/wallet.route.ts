@@ -10,6 +10,8 @@ const router = Router()
 
 // Send money for user
 router.post("/user-send-money", requestValidator(userSendMoneyZodSchema), authCheck(ROLE.USER, ROLE.SUPER_ADMIN, ROLE.ADMIN), walletController.userSendMOney)
+// all wallet - only for admins and super admins
+router.post("/all-wallets", authCheck(ROLE.SUPER_ADMIN, ROLE.ADMIN), walletController.allWallet)
 
 
 export const walletRoute = router

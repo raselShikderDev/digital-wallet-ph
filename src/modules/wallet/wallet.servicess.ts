@@ -6,6 +6,7 @@ import myAppError from "../../errorHelper/myAppError";
 import { StatusCodes } from "http-status-codes";
 import { walletModel } from "./wallet.model";
 import { WALLET_STATUS } from "./wallet.interface";
+import { envVars } from "../../config/env";
 
 type RequiredTransactionInput = Pick<
   ITransaction,
@@ -14,7 +15,18 @@ type RequiredTransactionInput = Pick<
 
 
 const allWallet = async ()=>{
-
+  const wallets = await walletModel.find()
+  if (!wallets || wallets === null) {
+      if (envVars.NODE_ENV === "Development") {
+        // eslint-disable-next-line no-console
+        console.log("Neither user nor agent created yet");
+      }
+    }
+    const walletsCount = await walletModel.countDocuments();
+    return {
+      meta: walletsCount,
+      data: wallets,
+    };
 }
 
 // User Sending money to another user - Send money

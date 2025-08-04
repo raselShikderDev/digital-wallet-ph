@@ -6,12 +6,29 @@ import sendResponse from "../../utils/sendResponse"
 import { asyncHandle } from "../../utils/asyncHandeler"
 
 
+// Get all wallet - Only admin and super admins are allowed
+const allWallet = asyncHandle(async (req:Request, res:Response, next:NextFunction)=>{
+const walletsData = await walletServices.allWallet()
+    // if (walletsData.data.length === 0) {
+        
+    // }
+    sendResponse(res, {
+    statusCode:StatusCodes.OK,
+    success:true,
+    message:"Send money request is successfull",
+    data:walletsData.data,
+    meta:{
+        total:walletsData.meta
+    }
+    })
+})
+
+// User Sending money to another user - Send money
 const userSendMOney = asyncHandle(async (req:Request, res:Response, next:NextFunction)=>{
     const payload = req.body
     const decodedToken = req.user
     const sendMoneyData = await walletServices.userSendMOney(payload, decodedToken)
-    // eslint-disable-next-line no-console
-    console.log("sendMoneyData: ", sendMoneyData)
+    
     sendResponse(res, {
     statusCode:StatusCodes.OK,
     success:true,
@@ -22,5 +39,6 @@ const userSendMOney = asyncHandle(async (req:Request, res:Response, next:NextFun
 
 
 export const walletController = {
-    userSendMOney
+    userSendMOney,
+    allWallet
 }
