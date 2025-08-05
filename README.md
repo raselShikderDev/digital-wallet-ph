@@ -36,10 +36,12 @@ The API provides the following functionalities, organized by user role:
 
   * **User Operations:**
       * Send money to another user.
-      * Request to withdraw money (cash-out) to a verified agent.
+      * Cash out to withdraw money to a verified agent.
+      * Allowed top up their account via CashIn by agent.
       * View their transaction history.
   * **Agent Operations:**
-      * Add money (cash-in) to a user's wallet.
+      * Allowed to add money to a user's wallet by Cash Out method.
+      * Deposit money to user by using CashIn.
   * **Atomic Transactions:** All financial operations are handled atomically using Mongoose transactions to ensure data integrity.
   * **Transaction History:** All transactions are stored and trackable.
 
