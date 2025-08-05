@@ -77,7 +77,7 @@ const userSendMOney = asyncHandle(
     sendResponse(res, {
       statusCode: StatusCodes.OK,
       success: true,
-      message: "Successfully Send Money",
+      message: "Successfully Send Money by user to user",
       data: sendMoneyData,
     });
   }
@@ -96,11 +96,33 @@ const userCashOut = asyncHandle(
     sendResponse(res, {
       statusCode: StatusCodes.OK,
       success: true,
-      message: "Successfully Cash Out",
+      message: "Successfully Cash Out by user to agent",
       data: sendMoneyData,
     });
   }
 );
+
+// Agent top up to user by CASH_IN and user also reciveign as CASH_IN (but actually for agent sending the money)
+const agentCashIn = asyncHandle(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const payload = req.body;
+    const decodedToken = req.user;
+    const cashInData = await walletServices.agentCashIn(
+      payload,
+      decodedToken
+    );
+
+    sendResponse(res, {
+      statusCode: StatusCodes.OK,
+      success: true,
+      message: "Successfully Cash In by Agent to user",
+      data: cashInData,
+    });
+  }
+);
+
+
+
 
 export const walletController = {
   userSendMOney,
@@ -108,4 +130,5 @@ export const walletController = {
   singelWallet,
   walletStatusToggle,
   userCashOut,
+  agentCashIn,
 };

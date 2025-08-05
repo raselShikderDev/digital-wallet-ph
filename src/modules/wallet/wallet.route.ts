@@ -24,6 +24,14 @@ router.post(
   authCheck(ROLE.USER),
   walletController.userCashOut
 );
+
+// Agent top up to user by CASH_IN and user also reciveign as CASH_IN (but actually for agent sending the money)
+router.post(
+  "/agent-cash-in",
+  requestValidator(userTransactionZodSchema),
+  authCheck(ROLE.AGENT),
+  walletController.agentCashIn
+);
 // all wallet - only for admins and super admins
 router.get(
   "/all",

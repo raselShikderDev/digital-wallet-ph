@@ -298,14 +298,14 @@ const agentCashIn = async (
   payload: RequiredTransactionInput,
   decodedToken: JwtPayload
 ) => {
-  const session = await transactionModel.startSession();
+ const session = await transactionModel.startSession();
   session.startTransaction();
   try {
     const { amount, type, toWallet } = payload;
 
-    // Agent wallet who is the sender
+    // Sender wallet user
     const fromWalletUser = await userModel
-      .findOne({ _id: decodedToken.id, role: ROLE.AGENT }, "-password")
+      .findOne({ _id: decodedToken.id, role: ROLE.AGENT, isAgentApproved: true}, "-password")
       .populate("walletId");
     if (!fromWalletUser) {
       throw new myAppError(
@@ -314,67 +314,50 @@ const agentCashIn = async (
       );
     }
 
-    // Receiver wallet user
+    // Receiver agent wallet
     const receiverWalletUser = await userModel
-      .findOne({ walletId: toWallet, role: ROLE.USER })
+      .findOne({ walletId: toWallet, role: ROLE.USER})
       .select("-password");
     if (!receiverWalletUser) {
-      throw new myAppError(StatusCodes.NOT_FOUND, "Agent does not exists");
-    }
-
-    if (
-      receiverWalletUser.isAgentApproved === false ||
-      !(receiverWalletUser.role === ROLE.AGENT)
-    ) {
-      throw new myAppError(StatusCodes.BAD_REQUEST, "Receiver is not agent");
+      throw new myAppError(StatusCodes.NOT_FOUND, "User is not valid");
     }
 
     // Receiver wallet
-    const receiverWallet = await walletModel.findById(toWallet);
+    const receiverWallet = await walletModel.findOne({_id:toWallet, walletStatus:WALLET_STATUS.ACTIVE});
     if (!receiverWallet) {
       throw new myAppError(
         StatusCodes.NOT_FOUND,
-        "Agents's wallet does not exists"
-      );
-    }
-
-    if (receiverWallet.walletStatus === WALLET_STATUS.BLOCKED) {
-      throw new myAppError(
-        StatusCodes.BAD_REQUEST,
-        `Agent are not allowed to make transaction`
+        "User is not allowed to make transaction"
       );
     }
 
     // Sender wallet
-    const senderWallet = await walletModel.findById(fromWalletUser.walletId);
+    const senderWallet = await walletModel.findOne({
+      _id: fromWalletUser.walletId,
+      walletStatus: WALLET_STATUS.ACTIVE,
+    });
     if (!senderWallet) {
       throw new myAppError(
         StatusCodes.NOT_FOUND,
-        "User wallet does not exists"
-      );
-    }
-    if (senderWallet.walletStatus === WALLET_STATUS.BLOCKED) {
-      throw new myAppError(
-        StatusCodes.BAD_REQUEST,
-        `You are not allowed to make transaction`
+        "You are not allowed to make transaction"
       );
     }
 
     // Updating sender wallet balance by static hook
-    const updatedSenderWallet = await walletModel.balanceAvailablity(
+    const updatedAgentWallet = await walletModel.balanceAvailablity(
       amount,
       senderWallet._id,
       session
     );
-    if (!updatedSenderWallet) {
+    if (!updatedAgentWallet) {
       throw new myAppError(
         StatusCodes.BAD_GATEWAY,
-        "Updating sender balance is failed"
+        "Updating agent balance is failed"
       );
     }
 
     // Updating Receiver balance
-    const updateAgentWallet = await walletModel.findOneAndUpdate(
+    const updateUserWallet = await walletModel.findOneAndUpdate(
       {
         _id: toWallet,
         walletStatus: WALLET_STATUS.ACTIVE,
@@ -383,10 +366,10 @@ const agentCashIn = async (
       { runValidators: true, new: true, session }
     );
 
-    if (!updateAgentWallet) {
+    if (!updateUserWallet) {
       throw new myAppError(
         StatusCodes.BAD_GATEWAY,
-        "Updating receiver balance is failed"
+        "Updating user balance is failed"
       );
     }
 
@@ -396,8 +379,8 @@ const agentCashIn = async (
       amount,
       type: type,
       initiatedBy: decodedToken.role,
-      fromWallet: updatedSenderWallet._id!,
-      toWallet: updateAgentWallet._id!,
+      fromWallet: updatedAgentWallet._id!,
+      toWallet: updateUserWallet._id!,
     };
 
     const tansactionHistory = await transactionModel.create([senderPayload], {
