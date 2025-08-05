@@ -7,7 +7,7 @@ type AnyZodObject = ZodObject<ZodRawShape>;
 const requestValidator =
   (zodSchema: AnyZodObject) =>
   async (req: Request, res: Response, next: NextFunction) => {
-    const body = req.body;
+    const body = req.body;    
     await zodSchema.parseAsync(body);
     if (envVars.NODE_ENV === "Development") {
       // eslint-disable-next-line no-console

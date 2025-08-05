@@ -69,7 +69,6 @@ walletSchema.static(
     if (!wallet) {
       throw new myAppError(StatusCodes.BAD_REQUEST, "Insufficient balance or wallet not found");
     }
-
     return wallet
   }
 );

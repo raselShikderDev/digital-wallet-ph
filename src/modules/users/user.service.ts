@@ -15,7 +15,7 @@ const createUser = async (payload: IUser) => {
   session.startTransaction();
   try {
     const { password, email, ...rest } = payload;
-    const existingUser = await userModel.findOne({ email });
+    const existingUser = await userModel.findOne({ email }).select("-password");
     if (existingUser) {
       throw new myAppError(StatusCodes.BAD_REQUEST, "User already exists");
     }
@@ -66,7 +66,7 @@ const createUser = async (payload: IUser) => {
       wallet[0].user,
       { walletId: wallet[0]._id },
       { runValidators: true, new: true, session }
-    );
+    ).select("-password");
 
     if (!userIncludingWallet) {
       throw new myAppError(StatusCodes.BAD_GATEWAY, "Failed to create wallet");
@@ -88,7 +88,7 @@ const createUser = async (payload: IUser) => {
 
 // get all user and agent combined
 const allUserAndAgents = async () => {
-  const usersAgents = await userModel.find();
+  const usersAgents = await userModel.find().select("-password");
   if (!usersAgents || usersAgents === null) {
     if (envVars.NODE_ENV === "Development") {
       console.log("Neither user nor agent created yet");
@@ -102,13 +102,13 @@ const allUserAndAgents = async () => {
 };
 // get all user
 const alluser = async () => {
-  const users = await userModel.find({ role: ROLE.USER });
+  const users = await userModel.find({ role: ROLE.USER }).select("-password");
   if (!users || users === null) {
     if (envVars.NODE_ENV === "Development") {
       console.log("user not created yet");
     }
   }
-  const userCount = await userModel.countDocuments();
+  const userCount = await userModel.countDocuments({ role: ROLE.USER });
   return {
     meta: userCount,
     data: users,
@@ -117,7 +117,7 @@ const alluser = async () => {
 
 // get user by id
 const getUser = async (id: string) => {
-  const user = await userModel.findById(id);
+  const user = await userModel.findOne({ _id: id, role: ROLE.USER }).select("-password");
   if (!user || user === null) {
     if (envVars.NODE_ENV === "Development") {
       console.log("User not created yet");
@@ -166,7 +166,7 @@ const updateUser = async (
   const updatedNewUser = await userModel.findByIdAndUpdate(id, payload, {
     new: true,
     runValidators: true,
-  });
+  }).select("-password");
 
   if (!updatedNewUser) {
     throw new myAppError(StatusCodes.BAD_GATEWAY, "User update faild");
@@ -188,13 +188,23 @@ const allAgents = async () => {
   const agents = await userModel.find({
     role: ROLE.AGENT,
     isAgentApproved: true,
-  });
-  if (!agents || agents === null) {
+  }).select("-password");
+  if (agents.length === 0) {
     if (envVars.NODE_ENV === "Development") {
       console.log("user not created yet");
     }
   }
-  const agentsCount = await userModel.countDocuments();
+  console.log(`All agents: ${agents}`);
+
+  const agentsCount = await userModel.countDocuments({
+    role: ROLE.AGENT,
+    isAgentApproved: true,
+  });
+  console.log({
+    meta: agentsCount,
+    data: agents,
+  });
+
   return {
     meta: agentsCount,
     data: agents,
@@ -207,7 +217,7 @@ const getSingelAgent = async (id: string) => {
     _id: id,
     role: ROLE.AGENT,
     isAgentApproved: true,
-  });
+  }).select("-password");
   if (!agent || agent === null) {
     if (envVars.NODE_ENV === "Development") {
       console.log("user not created yet");
@@ -218,23 +228,40 @@ const getSingelAgent = async (id: string) => {
 
 // update role user to agent by id - only admins are allowed
 const agentApproval = async (id: string) => {
+  const alreadyApproved = await userModel.findOne({
+    _id: id,
+    role: ROLE.AGENT,
+    isAgentApproved: true,
+  }).select("-password");
+  console.log(`alreadyApproved ${alreadyApproved}`);
+
+  let message: string = "";
+  if (alreadyApproved) {
+    message = "User already approved as agent";
+    return {
+      message,
+      alreadyApproved,
+    };
+  }
+
   const updatedToAgent = await userModel.findOneAndUpdate(
     { _id: id, role: ROLE.USER, isAgentApproved: false },
     { role: ROLE.AGENT, isAgentApproved: true },
     { runValidators: true, new: true }
-  );
+  ).select("-password");
+  console.log(`updatedToAgent ${updatedToAgent}`);
 
   if (!updatedToAgent || updatedToAgent === null) {
-    if (envVars.NODE_ENV === "Development") {
-      console.log("User not created yet");
-    }
     throw new myAppError(
       StatusCodes.BAD_REQUEST,
       "Failed to update user to agent"
     );
   }
-
-  return updatedToAgent;
+  message = "Successfully updated user role to agent";
+  return {
+    message,
+    updatedToAgent,
+  };
 };
 
 // update agent status in a toggle system by id - only admins are allowed
@@ -249,7 +276,7 @@ const agentStatusToggle = async (id: string) => {
       },
     ],
     { runValidators: true, new: true }
-  );
+  ).select("-password");
 
   if (!updatedToAgent || updatedToAgent === null) {
     if (envVars.NODE_ENV === "Development") {

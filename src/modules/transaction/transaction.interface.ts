@@ -13,11 +13,9 @@ export enum TransactionInitiatedBy {
 }
 
 export enum TransactionType {
-    SEND_MONEY = "SEND_MONEY",
-    ADD_MONEY = "ADD_MONEY",
-    RECEIVED_MONEY = "RECEIVED_MONEY",
-    CASH_OUT = "CASH_OUT",
-    CASH_IN = "CASH_IN",
+    SEND_MONEY = "SEND_MONEY", // when user send money to another user
+    CASH_OUT = "CASH_OUT", // when user cash out it will be cash out for usser but Agent actually reciveing for agent CASH_OUT == receiving cash
+    CASH_IN = "CASH_IN", // for user its cash in but for agent it sending cash, for agent CASH_IN === cash sending
 }
 
 export interface ITransaction {
