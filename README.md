@@ -61,6 +61,9 @@ The API provides the following functionalities, organized by user role:
 
 ```
 digital-wallet/
+├── dist                    # For converting into typescript to javascript
+├── api  
+│   ├── index.ts            # Ffunction for vercel login              
 ├── node_modules/           # Automatically generated directory for dependencies.
 ├── src/
 │   ├── config/             # Environment variables and configuration settings.
