@@ -42,3 +42,5 @@ turbo/
 
 # MongoDB dump files
 dump/
+
+.vercel

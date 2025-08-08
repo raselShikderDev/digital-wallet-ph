@@ -26,3 +26,10 @@ export default [
     },
   },
 ];
+
+// digital-waalleet
+
+// https://digital-wallet-sable.vercel.app/api/v1/user/register
+
+https://digital-waalleet.vercel.app/api/v1/wallet/user-send-money
+wallet/user-send-money
